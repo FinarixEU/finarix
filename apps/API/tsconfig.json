@@ -4,7 +4,7 @@
     "target": "ES2019",
     "moduleResolution": "node",
     "rootDir": "src",
-    "outDir" "dist",
+    "outDir": "dist",
     "strict": true,
     "esModuleInterop": true,
     "emitDecoratorMetadata": true,
@@ -13,5 +13,5 @@
     "resolveJsonModule": true,
     "forceConsistentCasingInFileNames": true
   },
-  "include": ["src/**/*"]
+  "include": ["src/*/"]
 }
