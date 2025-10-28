@@ -4,7 +4,7 @@ import { FinanceService } from './finance.service';
 import { CreateAccountDto, CreateTransactionDto } from './dto';
 
 @UseGuards(JwtAuthGuard)
-@Controller('api')
+@Controller()
 export class FinanceController {
   constructor(private finance: FinanceService) {}
 
