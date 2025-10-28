@@ -26,6 +26,7 @@ model Account {
   userId    Int
   user      User     @relation(fields: [userId], reference: [id])
   transactions Transaction[]
+}
 
 model Transaction {
   id            Int      @id @default(autoincrement())
