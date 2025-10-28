@@ -10,7 +10,7 @@ async function bootstrap() {
   // Security
   app.use(helmet());
 
-  // CORS – deine Web-URL eintragen
+  // CORS – deine Web-URL
   app.enableCors({
     origin: ['https://finarix-web.onrender.com'],
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
@@ -19,7 +19,7 @@ async function bootstrap() {
     maxAge: 86400,
   });
 
-  // * Alle echten API-Routen unter /api – /health bleibt frei *
+  // * Alle API-Routen unter /api, /health bleibt frei *
   app.setGlobalPrefix('api', {
     exclude: [{ path: 'health', method: RequestMethod.GET }],
   });
@@ -33,4 +33,5 @@ async function bootstrap() {
   // eslint-disable-next-line no-console
   console.log(Finarix API läuft auf Port ${port});
 }
+
 bootstrap();
