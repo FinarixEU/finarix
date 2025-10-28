@@ -19,7 +19,7 @@ async function bootstrap() {
     maxAge: 86400,
   });
 
-  // Alle API-Routen unter /api, aber /health ohne Prefix
+  // Alle echten API-Routen unter /api; /health davon ausnehmen
   app.setGlobalPrefix('api', {
     exclude: [{ path: 'health', method: RequestMethod.GET }],
   });
@@ -27,17 +27,15 @@ async function bootstrap() {
   // Validation
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
 
-  // >>> WICHTIG: Health-Check direkt auf dem Express-Server registrieren
-  const expressApp = app.getHttpAdapter().getInstance(); // Express-Instanz holen
-  expressApp.get('/health', (_req: any, res: any) => {
-    res.json({ status: 'ok', message: 'Finarix API is running 🚀' });
+  // --- RAW /health zusätzlich direkt auf Express registrieren ---
+  const expressApp = app.getHttpAdapter().getInstance();
+  expressApp.all('/health', (_req: any, res: any) => {
+    res.status(200).json({ status: 'ok', message: 'Finarix API is running 🚀' });
   });
-  // <<<
+  console.log(' /health (raw) registered');
 
   const port = Number(process.env.PORT) || 4000;
   await app.listen(port, '0.0.0.0');
-
-  // eslint-disable-next-line no-console
   console.log(`Finarix API läuft auf Port ${port}`);
 }
 
