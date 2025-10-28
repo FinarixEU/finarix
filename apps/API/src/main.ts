@@ -28,6 +28,11 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
 
   const port = Number(process.env.PORT) || 4000;
+  // ---- RAW /health Route (unabhängg von Nest-Controllern/Prefix) ----
+  app.getHttpAdapter().get(`/health`, (req, res) => {
+    re.json({ status: `ok`, message: `Finarix API is running` });
+  });
+  const port = Number(process.env.PORT) || 4000;
   await app.listen(port, '0.0.0.0');
 
   // eslint-disable-next-line no-console
