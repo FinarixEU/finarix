@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <title>Profil – Finarix</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>body{font-family:system-ui,Arial;margin:40px}</style>
+</head>
+<body>
+  <h2>Profil</h2>
+  <pre id="out">Lade…</pre>
+  <p><button id="logout">Logout</button> <a href="./index.html">Start</a></p>
+
+  <script src="./js/api.js"></script>
+  <script>
+    const out = document.getElementById('out');
+    const token = localStorage.getItem('token');
+    if (!token) { location.href = './login.html'; }
+
+    apiFetch('/auth/profile')
+      .then(data => out.textContent = JSON.stringify(data, null, 2))
+      .catch(err => { out.textContent = (err.message || 'Nicht autorisiert'); if (err.statusCode===401) location.href='./login.html'; });
+
+    document.getElementById('logout').onclick = () => {
+      localStorage.removeItem('token');
+      location.href = './index.html';
+    };
+  </script>
+</body>
+</html>
