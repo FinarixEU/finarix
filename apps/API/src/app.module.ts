@@ -8,6 +8,6 @@ import { FinanceModule } from './finance/finance.module';
 @Module({
   imports: [PrismaModule, AuthModule, FinanceModule],
   controllers: [AppController, VersionController],
-  providers: []
+  providers: [],
 })
 export class AppModule {}
