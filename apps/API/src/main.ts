@@ -3,15 +3,14 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, RequestMethod } from '@nestjs/common';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
-import { Request, Response } from 'express';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // --- Security Middleware ---
+  // Security
   app.use(helmet());
 
-  // --- CORS Einstellungen ---
+  // CORS
   app.enableCors({
     origin: ['https://finarix-web.onrender.com'],
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
@@ -20,25 +19,21 @@ async function bootstrap() {
     maxAge: 86400,
   });
 
-  // --- Global Prefix für API ---
+  // Alle API-Routen unter /api, aber /health ohne Prefix
   app.setGlobalPrefix('api', {
     exclude: [{ path: 'health', method: RequestMethod.GET }],
   });
 
-  // --- Validation Pipes ---
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      transform: true,
-    }),
-  );
+  // Validation
+  app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
 
-  // --- Immer erreichbarer Health-Check ---
-  app.getHttpAdapter().get('/health', (req: Request, res: Response) => {
+  // >>> WICHTIG: Health-Check direkt auf dem Express-Server registrieren
+  const expressApp = app.getHttpAdapter().getInstance(); // Express-Instanz holen
+  expressApp.get('/health', (_req: any, res: any) => {
     res.json({ status: 'ok', message: 'Finarix API is running 🚀' });
   });
+  // <<<
 
-  // --- Start Server ---
   const port = Number(process.env.PORT) || 4000;
   await app.listen(port, '0.0.0.0');
 
