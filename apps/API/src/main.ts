@@ -10,7 +10,7 @@ async function bootstrap() {
   // Sicherheits-Header
   app.use(helmet());
 
-  // CORS-Konfiguration
+  // CORS: erlaube deine Web-Seite auf Render
   app.enableCors({
     origin: ['https://finarix-web.onrender.com'],
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
@@ -19,14 +19,16 @@ async function bootstrap() {
     maxAge: 86400,
   });
 
-  // Prefix für API-Routen (health bleibt frei)
+  // Alle echten API-Routen unter /api, Health bleibt frei
   app.setGlobalPrefix('api', { exclude: ['health'] });
 
-  // Validation Pipes
+  // Validierung
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
 
   const port = Number(process.env.PORT) || 4000;
   await app.listen(port, '0.0.0.0');
+
+  // eslint-disable-next-line no-console
   console.log(Finarix API läuft auf Port ${port});
 }
 
