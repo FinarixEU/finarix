@@ -32,7 +32,6 @@ async function bootstrap() {
   app.getHttpAdapter().get(`/health`, (req, res) => {
     re.json({ status: `ok`, message: `Finarix API is running` });
   });
-  const port = Number(process.env.PORT) || 4000;
   await app.listen(port, '0.0.0.0');
 
   // eslint-disable-next-line no-console
