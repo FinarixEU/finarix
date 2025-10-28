@@ -7,25 +7,27 @@ import { AppModule } from './app.module';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  // Sicherheits-Header
   app.use(helmet());
 
-  const origins = (process.env.ALLOWED_ORIGINS || '').split(',').map(s => s.trim()).filter(Boolean);
+  // CORS: Erlaube deine Web-Seite auf Render
   app.enableCors({
-    origin: origins.length ? origins : true,
-    methods: ['GET','POST','PUT','PATCH','DELETE','OPTIONS'],
-    allowedHeaders: ['Content-Type','Accept','Authorization'],
+    origin: ['https://finarix-web.onrender.com'],
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Accept', 'Authorization'],
     credentials: false,
-    maxAge: 86400
+    maxAge: 86400,
   });
 
-  // alle „echten“ Routen unter /api – /health bleibt frei
+  // Alle echten API-Routen unter /api, Health bleibt frei
   app.setGlobalPrefix('api', { exclude: ['health'] });
 
+  // Validierung
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
 
   const port = Number(process.env.PORT) || 4000;
   await app.listen(port, '0.0.0.0');
-  // eslint-disable-next-line no-console
   console.log(Finarix API läuft auf Port ${port});
 }
+
 bootstrap();
