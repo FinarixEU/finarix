@@ -3,39 +3,43 @@ generator client {
 }
 
 datasource db {
-  proider = "postgresql"
-  url     = env("DATABASE_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model User {
-  id           Int       @id @default(autoincrement())
-  email        String    @unique
+  id           Int           @id @default(autoincrement())
+  email        String        @unique
   passwordHash String
-  name         String
-  createdAt    DateTime  @default(now())
-  account      Account[]
+  name         String?
+  createdAt    DateTime      @default(now())
+  accounts     Account[]
   transactions Transaction[]
 }
 
 model Account {
-  id        Int      @id @default(autoincrement())
+  id        Int       @id @default(autoincrement())
   name      String
   type      String
-  balance   Decimal  @db.Decimal(14, 2) @default(0)
-  createdAt DateTime @default(now())
-  userId    Int
-  user      User     @relation(fields: [userId], reference: [id])
+  balance   Decimal   @db.Decimal(14, 2) @default(0)
+  createdAt DateTime  @default(now())
+
+  userId Int
+  user   User      @relation(fields: [userId], references: [id])
+
   transactions Transaction[]
 }
 
 model Transaction {
-  id            Int      @id @default(autoincrement())
-  amount        Decimal  @db.Decimal(14, 2)
-  description   String?
-  date          DateTime @default(now())
-  createdAt     DateTime @default(now())
-  accountId     Int
-  account       Account  @relation(fields: [accountId], references: [id])
-  userId        Int
-  user          User     @relation(fields: [userId], references: [id])
+  id          Int       @id @default(autoincrement())
+  amount      Decimal   @db.Decimal(14, 2)
+  description String?
+  date        DateTime  @default(now())
+  createdAt   DateTime  @default(now())
+
+  accountId Int
+  account   Account  @relation(fields: [accountId], references: [id])
+
+  userId Int
+  user   User     @relation(fields: [userId], references: [id])
 }
