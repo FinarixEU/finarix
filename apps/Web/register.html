@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <title>Registrieren – Finarix</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>body{font-family:system-ui,Arial;margin:40px} input{display:block;margin:8px 0;padding:8px}</style>
+</head>
+<body>
+  <h2>Registrieren</h2>
+  <form id="f">
+    <input type="text" name="name" placeholder="Name" required />
+    <input type="email" name="email" placeholder="E-Mail" required />
+    <input type="password" name="password" placeholder="Passwort (min. 6)" required />
+    <button>Konto anlegen</button>
+  </form>
+  <p id="msg"></p>
+  <p><a href="./index.html">← Zurück</a></p>
+
+  <script src="./js/api.js"></script>
+  <script>
+    const f = document.getElementById('f');
+    const msg = document.getElementById('msg');
+    f.addEventListener('submit', async (e) => {
+      e.preventDefault(); msg.textContent = '';
+      const form = new FormData(f);
+      try{
+        await apiFetch('/auth/register', {
+          method:'POST',
+          body: JSON.stringify({
+            name: form.get('name'),
+            email: form.get('email'),
+            password: form.get('password')
+          }),
+        });
+        msg.textContent = 'Registrierung erfolgreich. Du kannst dich jetzt einloggen.';
+      }catch(err){ msg.textContent = err.message || 'Registrierung fehlgeschlagen'; }
+    });
+  </script>
+</body>
+</html>
