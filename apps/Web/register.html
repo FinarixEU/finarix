@@ -1,53 +1,51 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8" />
-  <title>Registrieren – Finarix</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <title>Registrieren • Finarix</title>
+  <link rel="stylesheet" href="./styles.css">
 </head>
 
 <body>
   <h1>Registrieren</h1>
 
-  <form id="registerForm" style="max-width: 320px;">
-    <input id="name" type="text" placeholder="Name" required /><br><br>
-    <input id="email" type="email" placeholder="E-Mail" required /><br><br>
-    <input id="password" type="password" placeholder="Passwort" required /><br><br>
+  <form id="registerForm">
+    <input id="name" placeholder="Name eingeben" required>
+    <input id="email" type="email" placeholder="E-Mail" required>
+    <input id="password" type="password" placeholder="Passwort" required>
     <button type="submit">Konto anlegen</button>
   </form>
 
-  <p>
-    Schon ein Konto? <a href="/login.html">Login</a> ·
-    <a href="/index.html">Zurück</a>
-  </p>
+  <p><a href="./login.html">Schon ein Konto? Login</a></p>
 
-  <!-- ✅ ZUERST die API-Hilfsfunktionen laden -->
+  <!-- ✅ API laden -->
   <script src="./js/api.js"></script>
 
-  <!-- ✅ Dann die Formular-Logik -->
+  <!-- ✅ Form Logik -->
   <script>
-  document.getElementById('registerForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
+    const form = document.getElementById('registerForm');
 
-    const name = document.getElementById('name').value.trim();
-    const email = document.getElementById('email').value.trim();
-    const password = document.getElementById('password').value;
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      try {
+        const body = {
+          name: document.getElementById('name').value,
+          email: document.getElementById('email').value,
+          password: document.getElementById('password').value,
+        };
 
-    console.log('[register] submit', { name, email });
+        console.log('[register] submit', body);
 
-    try {
-      const res = await apiRequest('/auth/register', {
-        method: 'POST',
-        body: { name, email, password }
-      });
+        const res = await apiRequest('/auth/register', { body });
 
-      alert('Registrierung erfolgreich ✅');
-      window.location.href = '/login.html';
-    } catch (err) {
-      console.error('[register] error', err);
-      alert(err.message || 'Registrierung fehlgeschlagen ❌');
-    }
-  });
+        alert('✅ Registrierung erfolgreich! Jetzt einloggen.');
+        window.location.href = './login.html';
+
+      } catch (err) {
+        console.error('[register] error', err);
+        alert('❌ Fehler: ' + err.message);
+      }
+    });
   </script>
 </body>
 </html>
