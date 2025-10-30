@@ -14,17 +14,21 @@ async function apiRequest(path, options = {}) {
     credentials: 'omit'
   });
 
-  // Handle text/JSON safely
-  const txt = await res.text();
+  const text = await res.text();
   let data;
-  try { data = JSON.parse(txt); } catch { data = txt; }
+
+  try {
+    data = JSON.parse(text);
+  } catch {
+    data = text;
+  }
 
   if (!res.ok) {
-    const msg = (data && (data.message || data.error)) || res.statusText || 'Fehler';
+    const msg = (data && (data.message || data.error)) || res.statusText;
     throw new Error(msg);
   }
 
   return data;
 }
 
-console.log('[api.js] ✅ geladen:', API_BASE');
+console.log('[api.js] ✅ Loaded:', API_BASE);
