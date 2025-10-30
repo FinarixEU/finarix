@@ -4,27 +4,47 @@
   <meta charset="utf-8" />
   <title>Profil – Finarix</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <style>body{font-family:system-ui,Arial;margin:40px}</style>
+  <style>
+    body{font-family:system-ui,Arial;margin:40px}
+    button{margin:8px 0;padding:8px}
+    pre{background:#f4f4f4;padding:12px;overflow:auto}
+  </style>
 </head>
 <body>
   <h2>Profil</h2>
-  <pre id="out">Lade…</pre>
-  <p><button id="logout">Logout</button> <a href="./index.html">Start</a></p>
+  <p>
+    <button id="btnMe">Meine Daten laden (/api/me)</button>
+    <button id="btnAccounts">Konten laden (/api/accounts)</button>
+    <button id="btnLogout">Logout</button>
+  </p>
+  <pre id="out">Noch nichts geladen…</pre>
+  <p><a href="./index.html">Zurück</a></p>
 
-  <script src="./js/api.js"></script>
+  <script src="/js/api.js"></script>
   <script>
     const out = document.getElementById('out');
-    const token = localStorage.getItem('token');
-    if (!token) { location.href = './login.html'; }
+    const show = (data) => out.textContent = JSON.stringify(data, null, 2);
 
-    apiFetch('/auth/profile')
-      .then(data => out.textContent = JSON.stringify(data, null, 2))
-      .catch(err => { out.textContent = (err.message || 'Nicht autorisiert'); if (err.statusCode===401) location.href='./login.html'; });
-
-    document.getElementById('logout').onclick = () => {
-      localStorage.removeItem('token');
-      location.href = './index.html';
+    // Buttons
+    document.getElementById('btnMe').onclick = async () => {
+      try { show(await apiFetch('/me', { method: 'GET' })); }
+      catch (e) { show({error: e.message, status: e.status}); }
     };
+
+    document.getElementById('btnAccounts').onclick = async () => {
+      try { show(await apiFetch('/accounts', { method: 'GET' })); }
+      catch (e) { show({error: e.message, status: e.status}); }
+    };
+
+    document.getElementById('btnLogout').onclick = () => {
+      localStorage.removeItem('token');
+      location.href = './login.html';
+    };
+
+    // Warnen, falls kein Token vorhanden ist
+    if (!localStorage.getItem('token')) {
+      out.textContent = 'Kein Token gefunden. Bitte zuerst einloggen.';
+    }
   </script>
 </body>
 </html>
