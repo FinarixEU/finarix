@@ -1,28 +1,31 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Registrieren - Finarix</title>
 </head>
+
 <body>
   <h1>Registrieren</h1>
 
   <form id="registerForm">
-    <input id="name" type="text" placeholder="Name" required /><br><br>
-    <input id="email" type="email" placeholder="E-Mail" required /><br><br>
-    <input id="password" type="password" placeholder="Passwort" required /><br><br>
+    <input id="name" type="text" placeholder="Name" required /><br /><br />
+    <input id="email" type="email" placeholder="E-Mail" required /><br /><br />
+    <input id="password" type="password" placeholder="Passwort" required /><br /><br />
     <button type="submit">Konto anlegen</button>
   </form>
 
   <p><a href="/login.html">Schon ein Konto? Login</a></p>
   <p><a href="/index.html">Zurück</a></p>
 
+  <!-- API Helper -->
   <script src="/js/api.js"></script>
 
+  <!-- Registrierung Logik -->
   <script>
     document.getElementById("registerForm").addEventListener("submit", async (e) => {
-      e.preventDefault(); // Browser-Standard verhindern
+      e.preventDefault();
 
       const name = document.getElementById("name").value.trim();
       const email = document.getElementById("email").value.trim();
@@ -34,7 +37,7 @@
           body: { name, email, password }
         });
 
-        alert("Registrierung erfolgreich!");
+        alert("Registrierung erfolgreich! 🎉");
         window.location.href = "/login.html";
       } catch (err) {
         alert(err.message || "Registrierung fehlgeschlagen");
