@@ -1,12 +1,18 @@
 const API_BASE = 'https://finarix-api.onrender.com/api';
 
 async function apiFetch(path, options = {}) {
-  const res = await fetch(API_BASE + path, {
+  const url = API_BASE + path;
+
+  const res = await fetch(url, {
+    method: options.method || 'GET',
     headers: {
       'Content-Type': 'application/json',
-      ...(options.headers || {})
+      Accept: 'application/json',
+      ...(options.headers || {}),
     },
-    ...options
+    body: options.body || null,
+    mode: 'cors',          // 💥 Wichtig für CORS!
+    credentials: 'omit',   // Keine Cookies senden (Render braucht das so)
   });
 
   if (!res.ok) {
