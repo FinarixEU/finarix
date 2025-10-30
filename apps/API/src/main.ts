@@ -66,6 +66,6 @@ async function bootstrap() {
 
   const port = Number(process.env.PORT) || 4000;
   await app.listen(port, '0.0.0.0');
-  console.log(Finarix API läuft auf Port ${port});
+  console.log(`Finarix API läuft auf Port ${port}`);
 }
 bootstrap();
