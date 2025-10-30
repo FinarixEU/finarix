@@ -1,12 +1,49 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="de">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Finarix</title>
+    <title>Finarix Web</title>
+    <style>
+      body { font-family: system-ui, Arial; padding: 24px; line-height: 1.6; }
+      code { background: #f4f4f4; padding: 2px 6px; border-radius: 4px; }
+      button { padding: 8px 12px; margin-right: 8px; cursor: pointer; }
+      pre { background:#f9f9f9; padding:12px; border-radius:6px; overflow:auto; }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
+    <h1>Finarix Web läuft 🚀</h1>
+    <p>
+      Verbunden mit der API unter
+      <code id="apiUrl">https://finarix-api.onrender.com</code>
+    </p>
+
+    <div>
+      <button id="btnHealth">/health testen</button>
+      <button id="btnVersion">/api/version testen</button>
+    </div>
+
+    <pre id="out">Ergebnis erscheint hier…</pre>
+
+    <script>
+      const API_BASE = 'https://finarix-api.onrender.com'; // <— richtige URL!
+
+      const out = (x) => document.getElementById('out').textContent =
+        typeof x === 'string' ? x : JSON.stringify(x, null, 2);
+
+      document.getElementById('btnHealth').onclick = async () => {
+        try {
+          const r = await fetch(${API_BASE}/health);
+          out(await r.json());
+        } catch (e) { out(e.toString()); }
+      };
+
+      document.getElementById('btnVersion').onclick = async () => {
+        try {
+          const r = await fetch(${API_BASE}/api/version);
+          out(await r.json());
+        } catch (e) { out(e.toString()); }
+      };
+    </script>
   </body>
 </html>
