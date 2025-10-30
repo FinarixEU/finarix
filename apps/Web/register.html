@@ -1,53 +1,53 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Registrieren – Finarix</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="styles.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 </head>
 
 <body>
   <h1>Registrieren</h1>
 
-  <form id="registerForm" style="max-width: 300px;">
-    <input type="text" id="name" placeholder="Name" required /><br><br>
-    <input type="email" id="email" placeholder="E-Mail" required /><br><br>
-    <input type="password" id="password" placeholder="Passwort" required /><br><br>
+  <form id="registerForm" style="max-width: 320px;">
+    <input id="name" type="text" placeholder="Name" required /><br><br>
+    <input id="email" type="email" placeholder="E-Mail" required /><br><br>
+    <input id="password" type="password" placeholder="Passwort" required /><br><br>
     <button type="submit">Konto anlegen</button>
   </form>
 
   <p>
-    Schon ein Konto?
-    <a href="/login.html">Login</a> ·
+    Schon ein Konto? <a href="/login.html">Login</a> ·
     <a href="/index.html">Zurück</a>
   </p>
 
-  <!-- ✅ Wichtig: richtige Einbindung der API -->
+  <!-- ✅ ZUERST die API-Hilfsfunktionen laden -->
   <script src="./js/api.js"></script>
 
-  <!-- ✅ Registrierung Code -->
+  <!-- ✅ Dann die Formular-Logik -->
   <script>
-  document.getElementById("registerForm").addEventListener("submit", async (e) => {
+  document.getElementById('registerForm').addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    const name = document.getElementById("name").value.trim();
-    const email = document.getElementById("email").value.trim();
-    const password = document.getElementById("password").value;
+    const name = document.getElementById('name').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+
+    console.log('[register] submit', { name, email });
 
     try {
-      const res = await apiRequest("/auth/register", {
-        method: "POST",
+      const res = await apiRequest('/auth/register', {
+        method: 'POST',
         body: { name, email, password }
       });
 
-      alert("Registrierung erfolgreich ✅");
-      window.location.href = "/login.html";
+      alert('Registrierung erfolgreich ✅');
+      window.location.href = '/login.html';
     } catch (err) {
-      alert(err.message || "Registrierung fehlgeschlagen ❌");
+      console.error('[register] error', err);
+      alert(err.message || 'Registrierung fehlgeschlagen ❌');
     }
   });
   </script>
-
 </body>
 </html>
