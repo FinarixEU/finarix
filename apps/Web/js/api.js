@@ -1,4 +1,4 @@
-const API_BASE = 'https://finarix-api.onrender.com/api';
+const API_BASE = 'https://finarix.onrender.com/api';
 
 async function apiFetch(path, options = {}) {
   const url = API_BASE + path;
