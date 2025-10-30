@@ -11,34 +11,33 @@ async function bootstrap() {
   // Security
   app.use(helmet());
 
-  // CORS
+  // Dynamisches CORS (über Environment Variable)
+  const allowedOrigins = process.env.ALLOWED_ORIGINS
+    ? process.env.ALLOWED_ORIGINS.split(',')
+    : ['https://finarix-web.onrender.com'];
+
   app.enableCors({
-    origin: ['https://finarix-web.onrender.com'],
+    origin: allowedOrigins,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Accept', 'Authorization'],
-    credentials: false,
+    credentials: true,
     maxAge: 86400,
-  });
-
-  // Alle echten API-Routen unter /api; /health bleibt frei
-  app.setGlobalPrefix('api', {
-    exclude: [{ path: 'health', method: RequestMethod.GET }],
   });
 
   // Validation
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
 
-  // ---- RAW /health ohne Prefix (unabhängig von Controllern) ----
+  // Health Route (funktioniert auch ohne Controller)
   const adapter = app.getHttpAdapter();
-  // Variante 1: direkt über Adapter (Nest unterstützt das)
-  // @ts-ignore - manche Typings kennen .get nicht, es funktioniert aber zur Laufzeit
-  adapter.get('/health', (_req: Request, res: Response) => {
-    res.json({ status: 'ok', message: 'Finarix API is running' });
+  adapter.get('/health', (req: Request, res: Response) => {
+    res.json({ status: 'ok', message: 'Finarix API läuft' });
   });
   console.log('[BOOT] /health route registered');
 
+  // Start Server
   const port = Number(process.env.PORT) || 4000;
   await app.listen(port, '0.0.0.0');
   console.log(`Finarix API läuft auf Port ${port}`);
 }
+
 bootstrap();
