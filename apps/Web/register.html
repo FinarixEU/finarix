@@ -8,33 +8,37 @@
 </head>
 <body>
   <h2>Registrieren</h2>
+
   <form id="f">
-    <input type="text" name="name" placeholder="Name" required />
-    <input type="email" name="email" placeholder="E-Mail" required />
+    <input type="text"   name="name"     placeholder="Name" required />
+    <input type="email"  name="email"    placeholder="E-Mail" required />
     <input type="password" name="password" placeholder="Passwort (min. 6)" required />
     <button>Konto anlegen</button>
   </form>
-  <p id="msg"></p>
-  <p><a href="./index.html">← Zurück</a></p>
 
-  <script src="./js/api.js"></script>
+  <p id="msg"></p>
+  <p><a href="./login.html">Schon ein Konto? Login</a> · <a href="./index.html">Zurück</a></p>
+
+  <script src="/js/api.js"></script>
   <script>
     const f = document.getElementById('f');
     const msg = document.getElementById('msg');
     f.addEventListener('submit', async (e) => {
       e.preventDefault(); msg.textContent = '';
       const form = new FormData(f);
-      try{
+      try {
         await apiFetch('/auth/register', {
-          method:'POST',
+          method: 'POST',
           body: JSON.stringify({
             name: form.get('name'),
             email: form.get('email'),
-            password: form.get('password')
+            password: form.get('password'),
           }),
         });
         msg.textContent = 'Registrierung erfolgreich. Du kannst dich jetzt einloggen.';
-      }catch(err){ msg.textContent = err.message || 'Registrierung fehlgeschlagen'; }
+      } catch (err) {
+        msg.textContent = err.message || 'Registrierung fehlgeschlagen';
+      }
     });
   </script>
 </body>
