@@ -1,34 +1,30 @@
-<!-- Datei: apps/Web/js/api.js -->
-<script>
-// Basis-URL deiner API auf Render
 const API_BASE = 'https://finarix.onrender.com/api';
 
-// Universeller Fetch-Helper
 async function apiRequest(path, options = {}) {
   const url = API_BASE + path;
 
   const res = await fetch(url, {
-    method: options.method || 'GET',
+    method: options.method || 'POST',
     headers: {
       'Content-Type': 'application/json',
       ...(options.headers || {})
     },
     body: options.body ? JSON.stringify(options.body) : null,
     mode: 'cors',
-    credentials: 'omit' // keine Cookies nötig
+    credentials: 'omit'
   });
 
-  const raw = await res.text();
-  let data = null;
-  try { data = raw ? JSON.parse(raw) : null; } catch { data = raw; }
+  // Handle text/JSON safely
+  const txt = await res.text();
+  let data;
+  try { data = JSON.parse(txt); } catch { data = txt; }
 
   if (!res.ok) {
-    const msg = (data && (data.message || data.error)) || res.statusText || 'Request failed';
+    const msg = (data && (data.message || data.error)) || res.statusText || 'Fehler';
     throw new Error(msg);
   }
+
   return data;
 }
 
-// Für Debugging – siehst du in der Konsole, ob das Script geladen wurde
-console.log('[api.js] geladen, API_BASE =', API_BASE);
-</script>
+console.log('[api.js] ✅ geladen:', API_BASE');
