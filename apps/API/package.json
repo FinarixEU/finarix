@@ -6,7 +6,7 @@
   "main": "dist/main.js",
   "scripts": {
     "build": "tsc",
-    "start:prod": "prisma migrate deploy && node dist/main.js",
+    "start:prod": "prisma db push && node dist/main.js",
     "prisma:generate": "prisma generate",
     "prisma:migrate:deploy": "prisma migrate deploy",
     "postinstall": "npm run prisma:generate"
