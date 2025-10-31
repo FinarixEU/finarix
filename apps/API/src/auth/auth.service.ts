@@ -1,4 +1,9 @@
-import { Injectable, BadRequestException, UnauthorizedException, InternalServerErrorException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  UnauthorizedException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
@@ -14,6 +19,11 @@ export class AuthService {
 
   async register(dto: RegisterDto) {
     try {
+      // 1) Minimal-Validierung, um 500er durch bcrypt/Prisma zu vermeiden
+      if (!dto?.email || !dto?.password) {
+        throw new BadRequestException('E-Mail und Passwort sind erforderlich');
+      }
+
       const existing = await this.prisma.user.findUnique({
         where: { email: dto.email },
       });
@@ -23,27 +33,48 @@ export class AuthService {
 
       const passwordHash = await bcrypt.hash(dto.password, 10);
 
+      // name nur setzen, wenn vorhanden (kein null schreiben)
+      const data: any = {
+        email: dto.email,
+        passwordHash,
+      };
+      if (dto.name && dto.name.trim()) {
+        data.name = dto.name.trim();
+      }
+
       const user = await this.prisma.user.create({
-        data: {
-          email: dto.email,
-          passwordHash,
-          name: dto.name ?? null,
-        },
+        data,
         select: { id: true, email: true, name: true, createdAt: true },
       });
 
       return user;
     } catch (e: any) {
-      console.error('[REGISTER] failed:', e);
+      // 💡 Mehr Debug-Infos in den Logs
+      console.error('[REGISTER] failed', {
+        name: e?.name,
+        code: e?.code,
+        message: e?.message,
+        meta: e?.meta,
+      });
+
+      // Prisma: Unique violation
       if (e?.code === 'P2002') {
         throw new BadRequestException('E-Mail existiert bereits');
       }
-      throw new InternalServerErrorException('Registration fehlgeschlagen');
+
+      // Bessere Fehlermeldung (temporär hilfreich)
+      throw new InternalServerErrorException(
+        'Registration fehlgeschlagen'
+      );
     }
   }
 
   async login(dto: LoginDto) {
     try {
+      if (!dto?.email || !dto?.password) {
+        throw new BadRequestException('E-Mail und Passwort sind erforderlich');
+      }
+
       const user = await this.prisma.user.findUnique({
         where: { email: dto.email },
       });
@@ -63,7 +94,13 @@ export class AuthService {
 
       return { accessToken };
     } catch (e: any) {
-      console.error('[LOGIN] failed:', e);
+      console.error('[LOGIN] failed', {
+        name: e?.name,
+        code: e?.code,
+        message: e?.message,
+        meta: e?.meta,
+      });
+
       if (e instanceof UnauthorizedException || e instanceof BadRequestException) {
         throw e;
       }
