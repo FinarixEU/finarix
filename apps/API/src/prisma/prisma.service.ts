@@ -4,15 +4,10 @@ import { PrismaClient } from '@prisma/client';
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
   constructor() {
-    // Für Prod lieber nur ['warn', 'error']; fürs Debuggen kannst du 'query'/'info' kurzzeitig aktivieren
-    super({ log: ['warn', 'error'] });
+    // für Debug: alle Logs; später wieder auf ['warn','error'] zurückstellen
+    super({ log: ['query', 'info', 'warn', 'error'] });
   }
 
-  async onModuleInit() {
-    await this.$connect();
-  }
-
-  async onModuleDestroy() {
-    await this.$disconnect();
-  }
+  async onModuleInit() { await this.$connect(); }
+  async onModuleDestroy() { await this.$disconnect(); }
 }
