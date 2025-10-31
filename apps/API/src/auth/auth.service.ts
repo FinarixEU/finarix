@@ -17,10 +17,14 @@ export class AuthService {
     private readonly jwt: JwtService,
   ) {}
 
- async register(dto: RegisterDto) {
+  async register(dto: RegisterDto) {
     try {
-      const existing = await this.prisma.user.findUnique({ where: { email: dto.email } });
-      if (existing) throw new BadRequestException('E-Mail ist bereits registriert');
+      const existing = await this.prisma.user.findUnique({
+        where: { email: dto.email },
+      });
+      if (existing) {
+        throw new BadRequestException('E-Mail ist bereits registriert');
+      }
 
       const passwordHash = await bcrypt.hash(dto.password, 10);
 
@@ -31,7 +35,6 @@ export class AuthService {
 
       return user;
     } catch (e: any) {
-      // >>> temporäres, ausführliches Logging
       console.error('[REGISTER] failed', {
         name: e?.name,
         code: e?.code,
@@ -39,41 +42,16 @@ export class AuthService {
         meta: e?.meta,
         stack: e?.stack,
       });
-      // gleiche Antwort ans Frontend
-      if (e?.code === 'P2002') throw new BadRequestException('E-Mail existiert bereits');
-      throw new InternalServerErrorException('Registration fehlgeschlagen');
-    }
-  }
-      const user = await this.prisma.user.create({
-        data,
-        select: { id: true, email: true, name: true, createdAt: true },
-      });
-
-      return user;
-    } catch (e: any) {
-      // 💡 Mehr Debug-Infos in den Logs
-      console.error('[REGISTER] failed', {
-        name: e?.name,
-        code: e?.code,
-        message: e?.message,
-        meta: e?.meta,
-      });
-
-      // Prisma: Unique violation
       if (e?.code === 'P2002') {
         throw new BadRequestException('E-Mail existiert bereits');
       }
-
-      // Bessere Fehlermeldung (temporär hilfreich)
-      throw new InternalServerErrorException(
-        'Registration fehlgeschlagen'
-      );
+      throw new InternalServerErrorException('Registration fehlgeschlagen');
     }
   }
 
   async login(dto: LoginDto) {
     try {
-      if (!dto?.email || !dto?.password) {
+      if (!dto.email || !dto.password) {
         throw new BadRequestException('E-Mail und Passwort sind erforderlich');
       }
 
@@ -102,7 +80,6 @@ export class AuthService {
         message: e?.message,
         meta: e?.meta,
       });
-
       if (e instanceof UnauthorizedException || e instanceof BadRequestException) {
         throw e;
       }
