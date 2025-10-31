@@ -17,31 +17,33 @@ export class AuthService {
     private readonly jwt: JwtService,
   ) {}
 
-  async register(dto: RegisterDto) {
+ async register(dto: RegisterDto) {
     try {
-      // 1) Minimal-Validierung, um 500er durch bcrypt/Prisma zu vermeiden
-      if (!dto?.email || !dto?.password) {
-        throw new BadRequestException('E-Mail und Passwort sind erforderlich');
-      }
-
-      const existing = await this.prisma.user.findUnique({
-        where: { email: dto.email },
-      });
-      if (existing) {
-        throw new BadRequestException('E-Mail ist bereits registriert');
-      }
+      const existing = await this.prisma.user.findUnique({ where: { email: dto.email } });
+      if (existing) throw new BadRequestException('E-Mail ist bereits registriert');
 
       const passwordHash = await bcrypt.hash(dto.password, 10);
 
-      // name nur setzen, wenn vorhanden (kein null schreiben)
-      const data: any = {
-        email: dto.email,
-        passwordHash,
-      };
-      if (dto.name && dto.name.trim()) {
-        data.name = dto.name.trim();
-      }
+      const user = await this.prisma.user.create({
+        data: { email: dto.email, passwordHash, name: dto.name ?? null },
+        select: { id: true, email: true, name: true, createdAt: true },
+      });
 
+      return user;
+    } catch (e: any) {
+      // >>> temporäres, ausführliches Logging
+      console.error('[REGISTER] failed', {
+        name: e?.name,
+        code: e?.code,
+        message: e?.message,
+        meta: e?.meta,
+        stack: e?.stack,
+      });
+      // gleiche Antwort ans Frontend
+      if (e?.code === 'P2002') throw new BadRequestException('E-Mail existiert bereits');
+      throw new InternalServerErrorException('Registration fehlgeschlagen');
+    }
+  }
       const user = await this.prisma.user.create({
         data,
         select: { id: true, email: true, name: true, createdAt: true },
