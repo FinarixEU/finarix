@@ -15,6 +15,7 @@
 <body>
   <h2>Konten & Transaktionen</h2>
 
+  <!-- Konto anlegen -->
   <div>
     <input id="accName" placeholder="Kontoname" />
     <select id="accType">
@@ -27,6 +28,7 @@
     <button id="btnLogout">Logout</button>
   </div>
 
+  <!-- Transaktion hinzufügen -->
   <div>
     <select id="txAccount"></select>
     <input id="txAmount" type="number" step="0.01" placeholder="Betrag" />
@@ -37,7 +39,10 @@
   <table>
     <thead>
       <tr>
-        <th>Datum</th><th>Konto</th><th>Betrag</th><th>Text</th>
+        <th>Datum</th>
+        <th>Konto</th>
+        <th>Betrag</th>
+        <th>Text</th>
       </tr>
     </thead>
     <tbody id="rows"><tr><td colspan="4">Lade…</td></tr></tbody>
@@ -47,59 +52,143 @@
 
   <script src="./js/api.js"></script>
   <script>
+    // Hilfen
     const rows = document.getElementById('rows');
     const selTxAcc = document.getElementById('txAccount');
+    const btnAddAcc = document.getElementById('btnAddAcc');
+    const btnAddTx  = document.getElementById('btnAddTx');
+    const btnReload = document.getElementById('btnReload');
+    const btnLogout = document.getElementById('btnLogout');
 
-    document.getElementById('btnLogout').onclick = () => logout();
+    function fmtAmount(v){ return Number(v).toFixed(2).replace('.', ',') + ' €'; }
+    function fmtDate(iso){
+      try{ return new Date(iso).toLocaleString(); }catch{ return iso || ''; }
+    }
+    function setBusy(el,busy){
+      if(!el) return;
+      el.disabled = !!busy;
+      el.textContent = busy ? (el.dataset.busyText || 'Bitte warten…') : (el.dataset.label || el.textContent);
+    }
 
+    // Logout
+    btnLogout.onclick = () => {
+      localStorage.removeItem('token');
+      location.href = './login.html';
+    };
+
+    // Konten laden & Dropdown füllen
     async function loadAccounts() {
-      const list = await apiFetch('/accounts');
+      const list = await apiFetch('/accounts'); // GET
       selTxAcc.innerHTML = '';
+      if (!list || list.length === 0) {
+        const opt = document.createElement('option');
+        opt.value = '';
+        opt.textContent = 'Noch kein Konto vorhanden';
+        selTxAcc.appendChild(opt);
+        return [];
+      }
       for (const a of list) {
         const opt = document.createElement('option');
         opt.value = a.id;
-        opt.textContent = ${a.name} (${a.type}) – Saldo: ${a.balance};
+        // * WICHTIG: Template-String mit Backticks *
+        opt.textContent = ${a.name} (${a.type}) – Saldo: ${Number(a.balance).toFixed(2)};
         selTxAcc.appendChild(opt);
       }
       return list;
     }
 
+    // Transaktionen laden & Tabelle rendern (falls GET /transactions vorhanden ist)
     async function loadTransactions() {
-      // Falls es noch keinen GET /transactions gibt, kannst du diese
-      // Funktion erstmal leer lassen oder später ergänzen.
-      rows.innerHTML = '<tr><td colspan="4">Keine Transaktionen geladen.</td></tr>';
+      try {
+        const txs = await apiFetch('/transactions'); // GET
+        if (!txs || txs.length === 0) {
+          rows.innerHTML = '<tr><td colspan="4">Keine Transaktionen vorhanden.</td></tr>';
+          return;
+        }
+        // Nach Datum absteigend (falls Feld vorhanden)
+        txs.sort((a,b) => new Date(b.date||b.createdAt||0) - new Date(a.date||a.createdAt||0));
+        rows.innerHTML = '';
+        for (const t of txs) {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${fmtDate(t.date || t.createdAt)}</td>
+            <td>${t.account?.name ?? (t.accountName || '')}</td>
+            <td>${fmtAmount(t.amount)}</td>
+            <td>${t.description ?? ''}</td>
+          `;
+          rows.appendChild(tr);
+        }
+      } catch (e) {
+        // Falls Endpoint noch nicht existiert:
+        console.warn('GET /transactions nicht verfügbar:', e);
+        rows.innerHTML = '<tr><td colspan="4">Transaktionsliste derzeit nicht verfügbar.</td></tr>';
+      }
     }
 
-    document.getElementById('btnAddAcc').onclick = async () => {
+    // Konto anlegen
+    btnAddAcc.dataset.label = 'Konto anlegen';
+    btnAddAcc.dataset.busyText = 'Speichere…';
+    btnAddAcc.onclick = async () => {
       const name = document.getElementById('accName').value.trim();
       const type = document.getElementById('accType').value;
       const balance = Number(document.getElementById('accBalance').value || 0);
       if (!name) return alert('Bitte Kontoname eingeben');
 
-      await apiFetch('/accounts', { method:'POST', body:{ name, type, balance }});
-      await loadAccounts();
-      alert('Konto angelegt.');
+      try{
+        setBusy(btnAddAcc,true);
+        await apiFetch('/accounts', { method:'POST', body:{ name, type, balance }});
+        await loadAccounts();
+        alert('Konto angelegt.');
+      }catch(e){
+        console.error(e);
+        alert(e.message || 'Konto konnte nicht angelegt werden.');
+      }finally{
+        setBusy(btnAddAcc,false);
+      }
     };
 
-    document.getElementById('btnAddTx').onclick = async () => {
+    // Transaktion hinzufügen
+    btnAddTx.dataset.label = '+ Transaktion';
+    btnAddTx.dataset.busyText = 'Speichere…';
+    btnAddTx.onclick = async () => {
       const accountId = Number(selTxAcc.value);
       const amount = Number(document.getElementById('txAmount').value || 0);
       const description = document.getElementById('txDesc').value.trim();
-      if (!accountId || !amount) return alert('Konto & Betrag angeben');
 
-      await apiFetch('/transactions', { method:'POST', body:{ accountId, amount, description }});
-      await loadTransactions();
-      alert('Transaktion gespeichert.');
+      if (!accountId) return alert('Bitte ein Konto auswählen.');
+      if (!amount) return alert('Bitte einen Betrag eingeben.');
+
+      try{
+        setBusy(btnAddTx,true);
+        await apiFetch('/transactions', { method:'POST', body:{ accountId, amount, description }});
+        await loadTransactions();
+        alert('Transaktion gespeichert.');
+      }catch(e){
+        console.error(e);
+        alert(e.message || 'Transaktion konnte nicht gespeichert werden.');
+      }finally{
+        setBusy(btnAddTx,false);
+      }
     };
 
-    document.getElementById('btnReload').onclick = async () => {
-      await loadAccounts();
-      await loadTransactions();
+    // Neu laden
+    btnReload.onclick = async () => {
+      try{
+        btnReload.disabled = true;
+        await loadAccounts();
+        await loadTransactions();
+      } finally {
+        btnReload.disabled = false;
+      }
     };
 
-    // Initial
+    // Initial laden
     (async () => {
       try {
+        // Prüfen, ob apiFetch vorhanden ist
+        if (typeof apiFetch !== 'function') {
+          throw new Error('apiFetch ist nicht verfügbar. Prüfe ./js/api.js und die Script-Einbindung.');
+        }
         await loadAccounts();
         await loadTransactions();
       } catch (e) {
