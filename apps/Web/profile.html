@@ -1,19 +1,36 @@
-<!doctype html><html lang="de"><head>
-<meta charset="utf-8"/><title>Profil</title>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<style>
-body{font-family:system-ui;margin:40px}button{padding:10px 14px;margin-right:8px}pre{background:#f4f4f4;padding:14px}
-</style></head><body>
-<h2>Profil</h2>
-<button id="me">Meine Daten</button>
-<button id="logout">Logout</button>
-<pre id="out">Noch nichts geladen…</pre>
-<p><a href="./index.html">← Zurück</a></p>
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <title>Profil – Finarix</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body{font-family:system-ui,Arial;margin:40px}
+    pre{background:#f3f3f3;padding:12px;border-radius:6px;overflow:auto}
+    button{margin-right:8px}
+  </style>
+</head>
+<body>
+  <h2>Profil</h2>
+  <button id="btnMe">Meine Daten</button>
+  <button id="btnLogout">Logout</button>
+  <pre id="out">Noch nichts geladen…</pre>
+  <p><a href="./index.html">← Zurück</a></p>
 
-<script src="./js/api.js"></script>
-<script>
-if(!getToken())location='./login.html';
-me.onclick=async()=>{out.textContent=JSON.stringify(await api('/auth/me'),null,2);}
-logout.onclick=()=>{clearToken();location='./index.html';};
-</script>
-</body></html>
+  <script src="./js/api.js"></script>
+  <script>
+    const out = document.getElementById('out');
+    document.getElementById('btnLogout').onclick = () => logout();
+
+    document.getElementById('btnMe').onclick = async () => {
+      out.textContent = 'Lade…';
+      try {
+        const me = await apiFetch('/auth/me');
+        out.textContent = JSON.stringify(me, null, 2);
+      } catch (e) {
+        out.textContent = 'Fehler: ' + (e.message || 'Unbekannt');
+      }
+    };
+  </script>
+</body>
+</html>
