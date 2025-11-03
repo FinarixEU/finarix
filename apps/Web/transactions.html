@@ -45,7 +45,6 @@
 
   <p><a href="./index.html">← Zurück</a></p>
 
-  <!-- api.js MUSS zuerst kommen -->
   <script src="./js/api.js?v=4"></script>
   <script>
     const rows = document.getElementById('rows');
@@ -59,15 +58,31 @@
       for (const a of list) {
         const opt = document.createElement('option');
         opt.value = a.id;
-        // WICHTIG: Backticks benutzen!
-        opt.textContent = `${a.name} (${a.type}) – Saldo: ${a.balance}`;
+        opt.textContent = ${a.name} (${a.type}) – Saldo: ${a.balance};
         selTxAcc.appendChild(opt);
       }
       return list;
     }
 
+    function fmtAmount(x){ return Number(x).toFixed(2).replace('.', ','); }
+    function fmtDate(s){ return new Date(s).toLocaleString(); }
+
     async function loadTransactions() {
-      rows.innerHTML = '<tr><td colspan="4">Keine Transaktionen geladen.</td></tr>';
+      const list = await apiFetch('/transactions', { method: 'GET' });
+      if (!list.length) {
+        rows.innerHTML = '<tr><td colspan="4">Keine Transaktionen geladen.</td></tr>';
+        return;
+      }
+      rows.innerHTML = '';
+      for (const t of list) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${fmtDate(t.date)}</td>
+          <td>${t.account?.name ?? '-'}</td>
+          <td>${fmtAmount(t.amount)}</td>
+          <td>${t.description ?? ''}</td>`;
+        rows.appendChild(tr);
+      }
     }
 
     document.getElementById('btnAddAcc').onclick = async () => {
@@ -88,19 +103,18 @@
       if (!accountId || !amount) return alert('Konto & Betrag angeben');
 
       await apiFetch('/transactions', { method:'POST', body:{ accountId, amount, description }});
-      await loadTransactions();
+      await Promise.all([loadAccounts(), loadTransactions()]);
       alert('Transaktion gespeichert.');
     };
 
     document.getElementById('btnReload').onclick = async () => {
-      await loadAccounts();
-      await loadTransactions();
+      await Promise.all([loadAccounts(), loadTransactions()]);
     };
 
+    // Initial
     (async () => {
       try {
-        await loadAccounts();
-        await loadTransactions();
+        await Promise.all([loadAccounts(), loadTransactions()]);
       } catch (e) {
         console.error(e);
         alert('Bitte zuerst einloggen.');
