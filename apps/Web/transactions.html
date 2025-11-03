@@ -5,142 +5,193 @@
   <title>Konten & Transaktionen – Finarix</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    body{font-family:system-ui,Arial;margin:40px}
-    input,select,button{padding:8px;margin:6px 6px 6px 0}
-    table{width:100%;border-collapse:collapse;margin-top:16px}
-    th,td{border-top:1px solid #eee;padding:10px;text-align:left}
-    .muted{color:#666}
+    body { font-family: system-ui, Arial, sans-serif; margin: 24px; }
+    input, select, button { margin: 6px 6px 6px 0; padding: 8px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+    th, td { border-bottom: 1px solid #eee; padding: 10px; text-align: left; }
+    .muted { color: #666; }
+    .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .box { background:#f5f5f5; padding: 10px 12px; border-radius: 8px; margin: 12px 0; }
+    .error { color:#b00020; font-weight:600; }
+    .ok { color:#0a7a0a; font-weight:600; }
   </style>
 </head>
 <body>
   <h2>Konten & Transaktionen</h2>
 
-  <div>
+  <div class="row">
     <input id="accName" placeholder="Kontoname" />
-    <input id="accType" placeholder="Typ (bank/cash)" />
-    <button id="btnCreateAcc">Konto anlegen</button>
-  </div>
+    <select id="accType" title="Typ">
+      <option value="bank">bank</option>
+      <option value="cash">cash</option>
+      <option value="card">card</option>
+    </select>
+    <input id="accBalance" type="number" step="0.01" placeholder="Startsaldo (optional)" />
+    <button id="btnCreateAccount">Konto anlegen</button>
 
-  <div>
-    <select id="selAcc"></select>
-    <input id="txAmount" type="number" step="0.01" value="0" />
-    <input id="txDesc" placeholder="Beschreibung" />
+    <select id="txAccount" title="Konto wählen"></select>
+    <input id="txAmount" type="number" step="0.01" placeholder="Betrag" style="width:120px" />
+    <input id="txDesc" placeholder="Beschreibung (optional)" style="min-width:240px" />
+    <input id="txDate" type="datetime-local" />
     <button id="btnAddTx">+ Transaktion</button>
+
     <button id="btnReload">Neu laden</button>
     <button id="btnLogout">Logout</button>
   </div>
 
-  <table>
-    <thead>
-      <tr>
-        <th>Datum</th>
-        <th>Konto</th>
-        <th>Betrag</th>
-        <th>Text</th>
-      </tr>
-    </thead>
-    <tbody id="rows">
-      <tr><td class="muted" colspan="4">Lade…</td></tr>
-    </tbody>
-  </table>
+  <div id="flash" class="muted"></div>
+
+  <div class="box">
+    <table>
+      <thead>
+        <tr>
+          <th>Datum</th>
+          <th>Konto</th>
+          <th>Betrag</th>
+          <th>Text</th>
+        </tr>
+      </thead>
+      <tbody id="rows">
+        <tr><td class="muted" colspan="4">Lade…</td></tr>
+      </tbody>
+    </table>
+  </div>
 
   <p><a href="./index.html">← Zurück</a></p>
 
-  <script src="./js/api.js"></script>
-  <script>
-    const rows = document.getElementById('rows');
-    const selAcc = document.getElementById('selAcc');
+  <script type="module">
+    import { apiGet, apiPost, getToken, clearToken } from '../js/api.js';
 
-    const token = localStorage.getItem('token');
-    if (!token) { location.href = './login.html'; }
+    const el = (id) => document.getElementById(id);
+    const rows = el('rows');
+    const flash = el('flash');
 
-    function authHeaders() {
-      return { Authorization: 'Bearer ' + token };
+    const accName = el('accName');
+    const accType = el('accType');
+    const accBalance = el('accBalance');
+
+    const txAccount = el('txAccount');
+    const txAmount  = el('txAmount');
+    const txDesc    = el('txDesc');
+    const txDate    = el('txDate');
+
+    const btnCreateAccount = el('btnCreateAccount');
+    const btnAddTx         = el('btnAddTx');
+    const btnReload        = el('btnReload');
+    const btnLogout        = el('btnLogout');
+
+    function info(msg, ok = false) {
+      flash.textContent = msg;
+      flash.className = ok ? 'ok' : (msg ? 'error' : 'muted');
+    }
+    const fmtMoney = (n) => (Number(n).toFixed(2) + ' €').replace('.', ',');
+    const fmtDate  = (iso) => new Date(iso).toLocaleString();
+
+    async function requireAuth() {
+      if (!getToken()) {
+        info('Nicht eingeloggt. Bitte neu anmelden.');
+        window.location.href = './login.html';
+        return false;
+      }
+      return true;
     }
 
-    async function loadAccounts() {
-      const list = await apiRequest('/accounts', { method: 'GET', headers: authHeaders() });
-      selAcc.innerHTML = '';
-      if (!list.length) {
+    async function loadAccountsIntoSelect() {
+      const accounts = await apiGet('/accounts');
+      txAccount.innerHTML = '';
+      for (const a of accounts) {
         const opt = document.createElement('option');
-        opt.value = ''; opt.textContent = '— kein Konto —';
-        selAcc.appendChild(opt);
-      } else {
-        for (const a of list) {
-          const opt = document.createElement('option');
-          opt.value = a.id; opt.textContent = ${a.name} (${a.type}) – Saldo: ${a.balance};
-          selAcc.appendChild(opt);
-        }
+        opt.value = String(a.id);
+        opt.textContent = ${a.name} (${a.type});
+        txAccount.appendChild(opt);
+      }
+      if (accounts.length === 0) {
+        const opt = document.createElement('option');
+        opt.value = '';
+        opt.textContent = '— kein Konto —';
+        txAccount.appendChild(opt);
       }
     }
 
     async function loadTransactions() {
-      const list = await apiRequest('/transactions', { method: 'GET', headers: authHeaders() });
-      rows.innerHTML = '';
-      if (!list.length) {
+      rows.innerHTML = '<tr><td class="muted" colspan="4">Lade…</td></tr>';
+      const data = await apiGet('/transactions');
+      if (!data || data.length === 0) {
         rows.innerHTML = '<tr><td class="muted" colspan="4">Keine Transaktionen</td></tr>';
         return;
       }
-      for (const t of list) {
+      rows.innerHTML = '';
+      for (const t of data) {
         const tr = document.createElement('tr');
         tr.innerHTML = `
-          <td>${new Date(t.date).toLocaleString()}</td>
-          <td>${t.account?.name ?? '-'}</td>
-          <td>${t.amount}</td>
-          <td>${t.description ?? ''}</td>`;
+          <td>${fmtDate(t.date)}</td>
+          <td>${t.account?.name ?? ('#' + t.accountId)}</td>
+          <td>${fmtMoney(t.amount)}</td>
+          <td>${t.description ?? ''}</td>
+        `;
         rows.appendChild(tr);
       }
     }
 
-    // Buttons
-    document.getElementById('btnCreateAcc').onclick = async () => {
-      const name = document.getElementById('accName').value.trim();
-      const type = document.getElementById('accType').value.trim() || 'bank';
-      if (!name) { alert('Kontoname fehlt'); return; }
-      await apiRequest('/accounts', {
-        method: 'POST',
-        headers: authHeaders(),
-        body: { name, type }
-      });
-      document.getElementById('accName').value = '';
-      await loadAccounts();
-    };
+    async function createAccount() {
+      const name = accName.value.trim();
+      const type = accType.value;
+      const balanceStr = accBalance.value.trim();
+      const balance = balanceStr === '' ? undefined : Number(balanceStr);
 
-    document.getElementById('btnAddTx').onclick = async () => {
-      const accountId = Number(selAcc.value);
-      const amount = Number(document.getElementById('txAmount').value);
-      const description = document.getElementById('txDesc').value.trim();
-      if (!accountId) { alert('Bitte ein Konto wählen'); return; }
-      if (!amount && amount !== 0) { alert('Betrag fehlt'); return; }
-      await apiRequest('/transactions', {
-        method: 'POST',
-        headers: authHeaders(),
-        body: { accountId, amount, description }
-      });
-      document.getElementById('txAmount').value = '0';
-      document.getElementById('txDesc').value = '';
-      await loadAccounts();       // saldo aktualisieren (im Select-Text)
-      await loadTransactions();   // liste aktualisieren
-    };
+      if (!name) return info('Kontoname fehlt');
 
-    document.getElementById('btnReload').onclick = async () => {
-      await Promise.all([loadAccounts(), loadTransactions()]);
-    };
+      await apiPost('/accounts', { name, type, balance });
+      info('Konto angelegt', true);
+      accName.value = ''; accBalance.value = '';
+      await loadAccountsIntoSelect();
+      await loadTransactions(); // falls Startsaldo serverseitig initiale Buchung erzeugt
+    }
 
-    document.getElementById('btnLogout').onclick = () => {
-      localStorage.removeItem('token');
-      location.href = './index.html';
-    };
+    async function addTransaction() {
+      const accountId = Number(txAccount.value);
+      const amountStr = txAmount.value.trim();
+      if (!accountId) return info('Bitte ein Konto wählen');
+      if (!amountStr) return info('Betrag fehlt');
 
-    // initial
-    (async () => {
+      const amount = Number(amountStr);
+      const description = txDesc.value.trim() || undefined;
+      let date; // optional
+      if (txDate.value) {
+        // datetime-local -> ISO
+        date = new Date(txDate.value).toISOString();
+      }
+
+      await apiPost('/transactions', { accountId, amount, description, date });
+      info('Transaktion gespeichert', true);
+      txAmount.value = ''; txDesc.value = ''; txDate.value = '';
+      await loadTransactions();
+    }
+
+    async function init() {
+      if (!(await requireAuth())) return;
       try {
-        await Promise.all([loadAccounts(), loadTransactions()]);
+        await loadAccountsIntoSelect();
+        await loadTransactions();
+        info(''); // clear
       } catch (e) {
         console.error(e);
-        alert(e.message || 'Fehler beim Laden');
+        info(e.message || 'Fehler beim Laden');
       }
-    })();
+    }
+
+    // Events
+    btnCreateAccount.onclick = async () => {
+      try { await createAccount(); } catch (e) { info(e.message || 'Fehler beim Anlegen'); }
+    };
+    btnAddTx.onclick = async () => {
+      try { await addTransaction(); } catch (e) { info(e.message || 'Fehler beim Speichern'); }
+    };
+    btnReload.onclick = init;
+    btnLogout.onclick = () => { clearToken(); window.location.href = './login.html'; };
+
+    // Start
+    init();
   </script>
 </body>
 </html>
