@@ -1,60 +1,57 @@
-// /apps/Web/js/api.js
-(function () {
-  // >>>> Falls nötig hier anpassen
-  const API_BASE = (window.API_BASE || 'https://finarix.onrender.com/api');
+<!-- Datei: apps/Web/js/api.js -->
+<script>
+// Basis-URL deiner API
+const API_BASE = 'https://finarix.onrender.com/api';
 
-  function getToken() {
-    return localStorage.getItem('token') || '';
+// Token lesen/schreiben
+function getToken() {
+  return localStorage.getItem('token') || '';
+}
+function setToken(t) {
+  if (t) localStorage.setItem('token', t);
+}
+
+// Universelle API-Fetch-Funktion
+async function apiFetch(path, opts = {}) {
+  const method = opts.method || (opts.body ? 'POST' : 'GET');
+  const headers = {
+    'Content-Type': 'application/json',
+    ...(opts.headers || {}),
+  };
+
+  const token = getToken();
+  if (token) headers.Authorization = `Bearer ${token}`;
+
+  const res = await fetch(`${API_BASE}${path}`, {
+    method,
+    headers,
+    body: opts.body ? JSON.stringify(opts.body) : undefined,
+    mode: 'cors',
+    credentials: 'omit',
+  });
+
+  const text = await res.text();
+  let data;
+  try { data = JSON.parse(text); } catch { data = text; }
+
+  if (!res.ok) {
+    const msg = (data && (data.message || data.error)) || res.statusText;
+    throw new Error(msg);
   }
 
-  async function apiFetch(path, opts = {}) {
-    const url = API_BASE + path;
-    const method = (opts.method || 'GET').toUpperCase();
+  return data;
+}
 
-    const headers = {
-      'Content-Type': 'application/json',
-      ...(opts.headers || {}),
-    };
+// Global verfügbar machen
+window.apiFetch = apiFetch;
+window.apiToken = { get: getToken, set: setToken };
 
-    const token = getToken();
-    if (token) headers['Authorization'] = Bearer ${token};
+// Logout-Helfer
+function logout() {
+  localStorage.removeItem('token');
+  location.href = './login.html';
+}
+window.logout = logout;
 
-    const fetchOpts = {
-      method,
-      headers,
-      mode: 'cors',
-      credentials: 'omit',
-    };
-
-    if (opts.body != null) {
-      fetchOpts.body = typeof opts.body === 'string'
-        ? opts.body
-        : JSON.stringify(opts.body);
-    }
-
-    const res = await fetch(url, fetchOpts);
-    const text = await res.text();
-
-    let data;
-    try { data = text ? JSON.parse(text) : null; }
-    catch { data = text; }
-
-    if (!res.ok) {
-      const msg = (data && (data.message || data.error)) || ${res.status} ${res.statusText};
-      throw new Error(msg);
-    }
-    return data;
-  }
-
-  function logout() {
-    localStorage.removeItem('token');
-    location.href = './login.html';
-  }
-
-  // global machen
-  window.API_BASE = API_BASE;
-  window.apiFetch = apiFetch;
-  window.logout = logout;
-
-  console.log('[api.js] LOADED:', API_BASE);
-})();
+console.log('[api.js] LOADED', API_BASE);
+</script>
