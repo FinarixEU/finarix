@@ -1,27 +1,43 @@
-<!doctype html><html lang="de"><head>
-<meta charset="utf-8"/><title>Login</title>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<style>
-body{font-family:system-ui;margin:40px}label{display:block;margin-top:10px}input,button{padding:10px;}button{margin-top:12px}
-</style></head><body>
-<h2>Login</h2>
-<form id="f">
-<label>E-Mail<input name="email" type="email" required/></label>
-<label>Passwort<input name="password" type="password" required/></label>
-<button>Anmelden</button>
-</form>
-<p id="msg"></p><p><a href="./index.html">← Zurück</a></p>
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <title>Login – Finarix</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>body{font-family:system-ui,Arial;margin:40px} input{display:block;margin:8px 0;padding:8px}</style>
+</head>
+<body>
+  <h2>Login</h2>
+  <form id="f">
+    <input type="email" name="email" placeholder="E-Mail" required />
+    <input type="password" name="password" placeholder="Passwort" required />
+    <button>Anmelden</button>
+  </form>
+  <p id="msg"></p>
+  <p><a href="./index.html">← Zurück</a></p>
 
-<script src="./js/api.js"></script>
-<script>
-const f=document.getElementById('f'),msg=document.getElementById('msg');
-f.onsubmit=async e=>{
- e.preventDefault();msg.textContent='';
- const fd=new FormData(f);
- try{
-   await apiLogin(fd.get('email'),fd.get('password'));
-   location.href='./profile.html';
- }catch(e){msg.textContent=e.message;}
-};
-</script>
-</body></html>
+  <script src="./js/api.js"></script>
+  <script>
+    const f = document.getElementById('f');
+    const msg = document.getElementById('msg');
+
+    f.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      msg.textContent = '';
+      const form = new FormData(f);
+
+      try {
+        const res = await apiFetch('/auth/login', {
+          method: 'POST',
+          body: { email: form.get('email'), password: form.get('password') }
+        });
+        // Backend gibt { accessToken } zurück
+        saveToken(res.accessToken);
+        location.href = './profile.html';
+      } catch (err) {
+        msg.textContent = err.message || 'Login fehlgeschlagen';
+      }
+    });
+  </script>
+</body>
+</html>
