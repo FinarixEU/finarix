@@ -1,23 +1,27 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
-import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
-  constructor(private readonly config: ConfigService) {
+  constructor() {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: config.get<string>('JWT_SECRET'),
+      secretOrKey: process.env.JWT_SECRET,
     });
+
+    if (!process.env.JWT_SECRET) {
+      console.error('❌ JWT_SECRET fehlt in der Umgebung!');
+    }
   }
 
-  // WICHTIG: dieselben Keys zurückgeben, die du beim Signen benutzt:
   async validate(payload: any) {
-    return {
-      userId: payload.userId,  // nicht "sub", nicht "id"
-      email:  payload.email,
-    };
+    if (!payload || !payload.userId) {
+      throw new UnauthorizedException('Ungültiges Token');
+    }
+
+    // ✅ Genau das übergeben wir weiter – req.user = { userId, email }
+    return { userId: payload.userId, email: payload.email };
   }
 }
