@@ -11,27 +11,47 @@
   <form id="f">
     <input type="email" name="email" placeholder="E-Mail" required />
     <input type="password" name="password" placeholder="Passwort" required />
-    <button>Anmelden</button>
+    <button type="submit">Anmelden</button>
   </form>
   <p id="msg"></p>
   <p><a href="./index.html">← Zurück</a></p>
 
+  <!-- api.js muss ein normales Script sein (KEIN type="module") 
+       und window.apiFetch definieren -->
   <script src="./js/api.js"></script>
   <script>
     const f = document.getElementById('f');
     const msg = document.getElementById('msg');
+
     f.addEventListener('submit', async (e) => {
-      e.preventDefault(); msg.textContent = '';
+      e.preventDefault();
+      msg.textContent = '';
+
       const form = new FormData(f);
-      try{
-        const res = await apiFetch('/auth/login', {
-          method:'POST',
-          body: JSON.stringify({ email: form.get('email'), password: form.get('password') }),
+      const payload = {
+        email: String(form.get('email') || ''),
+        password: String(form.get('password') || ''),
+      };
+
+      try {
+        // Wichtig: window.apiFetch und Content-Type JSON
+        const res = await window.apiFetch('/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
         });
-        localStorage.setItem('token', res.token);
+
+        // Backend liefert { accessToken }
+        if (!res || !res.accessToken) {
+          throw new Error('Unerwartete Antwort vom Server');
+        }
+
+        localStorage.setItem('token', res.accessToken);
         msg.textContent = 'Erfolgreich eingeloggt!';
         location.href = './profile.html';
-      }catch(err){ msg.textContent = err.message || 'Login fehlgeschlagen'; }
+      } catch (err) {
+        msg.textContent = err?.message || 'Login fehlgeschlagen';
+      }
     });
   </script>
 </body>
