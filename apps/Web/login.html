@@ -4,53 +4,44 @@
   <meta charset="utf-8" />
   <title>Login – Finarix</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <style>body{font-family:system-ui,Arial;margin:40px} input{display:block;margin:8px 0;padding:8px}</style>
+  <style>
+    body{font-family:system-ui,Arial;margin:40px}
+    label{display:block;margin-top:10px}
+    input,button{padding:10px;font:inherit}
+    button{margin-top:12px}
+    #msg{margin-top:12px}
+  </style>
 </head>
 <body>
   <h2>Login</h2>
-  <form id="f">
-    <input type="email" name="email" placeholder="E-Mail" required />
-    <input type="password" name="password" placeholder="Passwort" required />
-    <button type="submit">Anmelden</button>
+  <form id="form">
+    <label>E-Mail
+      <input type="email" name="email" placeholder="name@example.com" required />
+    </label>
+    <label>Passwort
+      <input type="password" name="password" placeholder="••••••••" required />
+    </label>
+    <button>Anmelden</button>
   </form>
+
   <p id="msg"></p>
   <p><a href="./index.html">← Zurück</a></p>
 
-  <!-- api.js muss ein normales Script sein (KEIN type="module") 
-       und window.apiFetch definieren -->
   <script src="./js/api.js"></script>
   <script>
-    const f = document.getElementById('f');
+    const f = document.getElementById('form');
     const msg = document.getElementById('msg');
 
     f.addEventListener('submit', async (e) => {
       e.preventDefault();
       msg.textContent = '';
-
-      const form = new FormData(f);
-      const payload = {
-        email: String(form.get('email') || ''),
-        password: String(form.get('password') || ''),
-      };
-
+      const fd = new FormData(f);
       try {
-        // Wichtig: window.apiFetch und Content-Type JSON
-        const res = await window.apiFetch('/auth/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        });
-
-        // Backend liefert { accessToken }
-        if (!res || !res.accessToken) {
-          throw new Error('Unerwartete Antwort vom Server');
-        }
-
-        localStorage.setItem('token', res.accessToken);
+        await apiLogin(fd.get('email'), fd.get('password'));
         msg.textContent = 'Erfolgreich eingeloggt!';
         location.href = './profile.html';
       } catch (err) {
-        msg.textContent = err?.message || 'Login fehlgeschlagen';
+        msg.textContent = 'Fehler: ' + (err.message || 'Login fehlgeschlagen');
       }
     });
   </script>
