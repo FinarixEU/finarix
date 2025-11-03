@@ -87,9 +87,14 @@ export class AuthService {
     }
   }
 
+  // ✅ FIX: me() mit Validierung (verhindert 500 Fehler)
   async me(userId: number) {
+    if (!userId || Number.isNaN(Number(userId))) {
+      throw new UnauthorizedException('Kein gültiger Benutzer im Token');
+    }
+
     return this.prisma.user.findUnique({
-      where: { id: userId },
+      where: { id: Number(userId) },
       select: { id: true, email: true, name: true, createdAt: true },
     });
   }
