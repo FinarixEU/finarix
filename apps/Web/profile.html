@@ -6,29 +6,31 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     body{font-family:system-ui,Arial;margin:40px}
-    pre{background:#f3f3f3;padding:12px;border-radius:6px;overflow:auto}
-    button{margin-right:8px}
+    button{margin:6px 10px 12px 0;padding:8px}
+    pre{background:#f4f4f4;padding:10px;border-radius:8px}
   </style>
 </head>
 <body>
   <h2>Profil</h2>
+
   <button id="btnMe">Meine Daten</button>
   <button id="btnLogout">Logout</button>
+
   <pre id="out">Noch nichts geladen…</pre>
+
   <p><a href="./index.html">← Zurück</a></p>
 
-  <script src="./js/api.js"></script>
+  <script src="./js/api.js?v=3"></script>
   <script>
     const out = document.getElementById('out');
-    document.getElementById('btnLogout').onclick = () => logout();
+    document.getElementById('btnLogout').onclick = logout;
 
     document.getElementById('btnMe').onclick = async () => {
-      out.textContent = 'Lade…';
       try {
         const me = await apiFetch('/auth/me');
         out.textContent = JSON.stringify(me, null, 2);
       } catch (e) {
-        out.textContent = 'Fehler: ' + (e.message || 'Unbekannt');
+        out.textContent = 'Fehler: ' + e.message;
       }
     };
   </script>
