@@ -1,35 +1,32 @@
-import { Body, Controller, Get, Post, UseGuards, Req, BadRequestException } from '@nestjs/common';
+import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwtAuth.guard';
 import { FinanceService } from './finance.service';
 import { CreateAccountDto, CreateTransactionDto } from './dto';
 
 @UseGuards(JwtAuthGuard)
-@Controller()
+@Controller('api')
 export class FinanceController {
   constructor(private readonly finance: FinanceService) {}
 
-  // ---- Accounts -------------------------------------------------------------
+  // Konten
   @Get('accounts')
-  async listAccounts(@Req() req: any) {
+  listAccounts(@Req() req: any) {
     return this.finance.listAccounts(req.user.userId);
   }
 
   @Post('accounts')
-  async createAccount(@Req() req: any, @Body() dto: CreateAccountDto) {
-    if (!dto?.name || !dto?.type) {
-      throw new BadRequestException('name und type sind erforderlich');
-    }
+  createAccount(@Req() req: any, @Body() dto: CreateAccountDto) {
     return this.finance.createAccount(req.user.userId, dto);
   }
 
-  // ---- Transactions ---------------------------------------------------------
+  // Transaktionen
   @Get('transactions')
-  async listTransactions(@Req() req: any) {
+  listTransactions(@Req() req: any) {
     return this.finance.listTransactions(req.user.userId);
   }
 
   @Post('transactions')
-  async createTransaction(@Req() req: any, @Body() dto: CreateTransactionDto) {
+  createTransaction(@Req() req: any, @Body() dto: CreateTransactionDto) {
     return this.finance.createTransaction(req.user.userId, dto);
   }
 }
