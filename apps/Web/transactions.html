@@ -1,150 +1,95 @@
-<!doctype html>
-<html lang="de">
-<head>
-  <meta charset="utf-8" />
-  <title>Transaktionen – Finarix</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <style>
-    body{font-family:system-ui,Arial;margin:40px}
-    .row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
-    select,input,button{padding:10px;font:inherit}
-    table{border-collapse:collapse;width:100%;margin-top:12px}
-    th,td{border:1px solid #eee;padding:10px;text-align:left}
-    th{background:#fafafa}
-    .right{text-align:right}
-    #msg{margin:6px 0 14px}
-  </style>
-</head>
-<body>
-  <h2>Transaktionen</h2>
+<!doctype html><html lang="de"><head>
+<meta charset="utf-8"/><title>Transaktionen</title>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<style>
+body{font-family:system-ui;margin:40px}
+input,select,button{padding:10px;margin:4px}
+table{border-collapse:collapse;width:100%;margin-top:10px}
+td,th{border:1px solid #eee;padding:8px}
+.right{text-align:right}
+pre{background:#f4f4f4;padding:10px}
+</style></head><body>
+<h2>Konten & Transaktionen</h2>
 
-  <div id="guard" hidden>
-    Du bist nicht eingeloggt. <a href="./login.html">Jetzt einloggen</a>.
+<div id="guard" hidden>Du bist nicht eingeloggt. <a href="./login.html">Login</a></div>
+
+<div id="app" hidden>
+  <div>
+    <input id="accName" placeholder="Kontoname"/>
+    <input id="accType" placeholder="Typ (bank/cash)"/>
+    <button id="createAcc">Konto anlegen</button>
   </div>
 
-  <div id="app" hidden>
-    <div class="row">
-      <label> Konto
-        <select id="account"></select>
-      </label>
-      <label> Betrag
-        <input id="amount" type="number" step="0.01" inputmode="decimal" placeholder="0.00" />
-      </label>
-      <label> Beschreibung
-        <input id="desc" type="text" placeholder="optional" />
-      </label>
-      <button id="btnAdd">+ Hinzufügen</button>
-      <button id="btnReload">Neu laden</button>
-      <button id="btnLogout">Logout</button>
-    </div>
-
-    <div id="msg"></div>
-
-    <table id="tbl">
-      <thead>
-        <tr>
-          <th>Datum</th>
-          <th>Konto</th>
-          <th class="right">Betrag</th>
-          <th>Beschreibung</th>
-        </tr>
-      </thead>
-      <tbody id="rows">
-        <tr><td colspan="4">Noch keine Daten…</td></tr>
-      </tbody>
-    </table>
-
-    <p style="margin-top:14px"><a href="./index.html">← Zurück</a></p>
+  <div>
+    <select id="acc"></select>
+    <input id="amt" type="number" step="0.01" placeholder="0.00"/>
+    <input id="desc" placeholder="Beschreibung"/>
+    <button id="add">+ Transaktion</button>
+    <button id="reload">Neu laden</button>
+    <button id="logout">Logout</button>
   </div>
 
-  <script src="./js/api.js"></script>
-  <script>
-    const guard = document.getElementById('guard');
-    const app = document.getElementById('app');
-    const selAccount = document.getElementById('account');
-    const amount = document.getElementById('amount');
-    const desc = document.getElementById('desc');
-    const rows = document.getElementById('rows');
-    const msg = document.getElementById('msg');
-    const btnAdd = document.getElementById('btnAdd');
-    const btnReload = document.getElementById('btnReload');
-    const btnLogout = document.getElementById('btnLogout');
+  <pre id="msg"></pre>
 
-    // Auth Guard
-    if (!getToken()) {
-      guard.hidden = false; app.hidden = true;
-    } else {
-      guard.hidden = true; app.hidden = false;
-      init();
-    }
+  <table>
+    <thead><tr><th>Datum</th><th>Konto</th><th class="right">Betrag</th><th>Text</th></tr></thead>
+    <tbody id="rows"><tr><td colspan="4">Lade…</td></tr></tbody>
+  </table>
 
-    async function init() {
-      msg.textContent = 'Lade Konten…';
-      try {
-        const accounts = await api('/accounts', { method: 'GET' });
-        selAccount.innerHTML = '';
-        for (const acc of accounts) {
-          const opt = document.createElement('option');
-          opt.value = acc.id;
-          opt.textContent = acc.name + (acc.type ? ` (${acc.type})` : '');
-          selAccount.appendChild(opt);
-        }
-        if (!accounts.length) {
-          const opt = document.createElement('option');
-          opt.textContent = 'Kein Konto vorhanden';
-          selAccount.appendChild(opt);
-        }
-        await reload();
-        msg.textContent = '';
-      } catch (e) {
-        msg.textContent = 'Fehler: ' + e.message;
-      }
-    }
+  <p><a href="./index.html">← Zurück</a></p>
+</div>
 
-    async function reload() {
-      rows.innerHTML = '<tr><td colspan="4">Lade…</td></tr>';
-      const list = await api('/transactions', { method: 'GET' });
-      if (!list.length) {
-        rows.innerHTML = '<tr><td colspan="4">Keine Transaktionen.</td></tr>';
-        return;
-      }
-      rows.innerHTML = '';
-      for (const t of list) {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${new Date(t.date || t.createdAt).toLocaleString()}</td>
-          <td>${t.account?.name ?? t.accountId}</td>
-          <td class="right">${Number(t.amount).toFixed(2)}</td>
-          <td>${t.description ?? ''}</td>
-        `;
-        rows.appendChild(tr);
-      }
-    }
+<script src="./js/api.js"></script>
+<script>
+const guard=document.getElementById('guard'),app=document.getElementById('app');
+if(!getToken()){guard.hidden=false;app.hidden=true;}else{guard.hidden=true;app.hidden=false;init();}
 
-    btnAdd.addEventListener('click', async () => {
-      msg.textContent = '';
-      const accId = Number(selAccount.value);
-      const amt = Number(amount.value);
-      if (!accId || !isFinite(amt)) { msg.textContent = 'Bitte Konto und gültigen Betrag angeben.'; return; }
+const acc=document.getElementById('acc'),amt=document.getElementById('amt'),desc=document.getElementById('desc');
+const rows=document.getElementById('rows'),msg=document.getElementById('msg');
 
-      try {
-        await api('/transactions', {
-          method: 'POST',
-          body: { accountId: accId, amount: amt, description: desc.value || null }
-        });
-        amount.value = ''; desc.value = '';
-        await reload();
-      } catch (e) {
-        msg.textContent = 'Fehler: ' + e.message;
-      }
-    });
+async function init(){
+ msg.textContent='Konten laden…';
+ const a=await api('/accounts',{method:'GET'});
+ acc.innerHTML='';
+ a.forEach(x=>{
+   const o=document.createElement('option');o.value=x.id;o.textContent=x.name;acc.appendChild(o);
+ });
+ await loadTx();
+ msg.textContent='';
+}
 
-    btnReload.addEventListener('click', reload);
+async function loadTx(){
+ rows.innerHTML='<tr><td colspan="4">Lade…</td></tr>';
+ const t=await api('/transactions',{method:'GET'});
+ if(!t.length){rows.innerHTML='<tr><td colspan="4">Keine Daten</td></tr>';return;}
+ rows.innerHTML='';
+ t.forEach(x=>{
+   const tr=document.createElement('tr');
+   tr.innerHTML=`<td>${new Date(x.createdAt).toLocaleString()}</td>
+   <td>${x.account?.name||x.accountId}</td>
+   <td class="right">${Number(x.amount).toFixed(2)}</td>
+   <td>${x.description||''}</td>`;
+   rows.appendChild(tr);
+ });
+}
 
-    btnLogout.addEventListener('click', () => {
-      clearToken();
-      location.href = './index.html';
-    });
-  </script>
-</body>
-</html>
+document.getElementById('createAcc').onclick=async()=>{
+ try{
+  await api('/accounts',{method:'POST',body:{name:accName.value,type:accType.value||null}});
+  accName.value='';accType.value='';
+  await init();
+ }catch(e){msg.textContent=e.message;}
+}
+
+document.getElementById('add').onclick=async()=>{
+ try{
+  await api('/transactions',{method:'POST',body:{accountId:+acc.value,amount:+amt.value,description:desc.value||null}});
+  amt.value='';desc.value='';
+  await loadTx();
+ }catch(e){msg.textContent=e.message;}
+}
+
+document.getElementById('reload').onclick=loadTx;
+document.getElementById('logout').onclick=()=>{clearToken();location='./index.html';};
+</script>
+</body></html>
