@@ -4,7 +4,11 @@
   <meta charset="utf-8" />
   <title>Login – Finarix</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <style>body{font-family:system-ui,Arial;margin:40px} input{display:block;margin:8px 0;padding:8px}</style>
+  <style>
+    body{font-family:system-ui,Arial;margin:40px}
+    input{display:block;margin:8px 0;padding:8px}
+    .err{color:#a00}
+  </style>
 </head>
 <body>
   <h2>Login</h2>
@@ -13,10 +17,10 @@
     <input type="password" name="password" placeholder="Passwort" required />
     <button>Anmelden</button>
   </form>
-  <p id="msg"></p>
+  <p id="msg" class="err"></p>
   <p><a href="./index.html">← Zurück</a></p>
 
-  <script src="./js/api.js"></script>
+  <script src="./js/api.js?v=3"></script>
   <script>
     const f = document.getElementById('f');
     const msg = document.getElementById('msg');
@@ -25,14 +29,16 @@
       e.preventDefault();
       msg.textContent = '';
       const form = new FormData(f);
-
       try {
         const res = await apiFetch('/auth/login', {
           method: 'POST',
-          body: { email: form.get('email'), password: form.get('password') }
+          body: {
+            email: form.get('email'),
+            password: form.get('password'),
+          }
         });
-        // Backend gibt { accessToken } zurück
-        saveToken(res.accessToken);
+        // WICHTIG: accessToken speichern
+        localStorage.setItem('token', res.accessToken);
         location.href = './profile.html';
       } catch (err) {
         msg.textContent = err.message || 'Login fehlgeschlagen';
