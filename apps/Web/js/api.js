@@ -1,48 +1,52 @@
-// --- API-Basis ---
+// apps/Web/js/api.js
 const API_BASE = 'https://finarix.onrender.com/api';
+const TOKEN_KEY = 'token';
 
-// --- Token Helpers ---
-export function getToken() {
-  return localStorage.getItem('token'); // wird beim Login gesetzt
-}
-export function setToken(token) {
-  if (token) localStorage.setItem('token', token);
-}
-export function clearToken() {
-  localStorage.removeItem('token');
+function getToken() {
+  return localStorage.getItem(TOKEN_KEY) || '';
 }
 
-// --- Low-level Request ---
-async function apiRequest(path, { method = 'GET', body, headers = {} } = {}) {
-  const token = getToken();
-  const res = await fetch(API_BASE + path, {
+function authHeader() {
+  const t = getToken();
+  return t ? { Authorization: Bearer ${t} } : {};
+}
+
+async function apiFetch(path, opts = {}) {
+  const url = API_BASE + path;
+
+  const method = opts.method || (opts.body ? 'POST' : 'GET');
+  const isJsonBody = opts.body && typeof opts.body === 'object' && !(opts.body instanceof FormData);
+
+  const res = await fetch(url, {
     method,
     headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: Bearer ${token} } : {}),
-      ...headers,
+      ...(isJsonBody ? { 'Content-Type': 'application/json' } : {}),
+      ...authHeader(),
+      ...(opts.headers || {})
     },
-    body: body ? JSON.stringify(body) : undefined,
+    body: isJsonBody ? JSON.stringify(opts.body) : opts.body ?? null,
     mode: 'cors',
     credentials: 'omit',
   });
 
-  // Bestmöglich parsen
-  const text = await res.text();
+  const raw = await res.text();
   let data;
-  try { data = text ? JSON.parse(text) : null; } catch { data = text; }
+  try { data = JSON.parse(raw); } catch { data = raw; }
 
   if (!res.ok) {
-    const msg =
-      (data && (data.message || data.error)) ||
-      ${res.status} ${res.statusText};
+    const msg = (data && (data.message || data.error)) || res.statusText || 'Fehler';
     throw new Error(msg);
   }
   return data;
 }
 
-// --- Convenience ---
-export const apiGet  = (path)           => apiRequest(path, { method: 'GET' });
-export const apiPost = (path, body = {}) => apiRequest(path, { method: 'POST', body });
+function saveToken(accessToken) {
+  localStorage.setItem(TOKEN_KEY, accessToken);
+}
 
-console.log('[api.js] LOADED:', API_BASE);
+function logout() {
+  localStorage.removeItem(TOKEN_KEY);
+  location.href = './login.html';
+}
+
+console.log('[api.js] LOADED', API_BASE);
