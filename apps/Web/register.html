@@ -1,52 +1,29 @@
-<!doctype html>
-<html lang="de">
-<head>
-  <meta charset="utf-8" />
-  <title>Registrieren – Finarix</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <style>
-    body{font-family:system-ui,Arial;margin:40px}
-    label{display:block;margin-top:10px}
-    input,button{padding:10px;font:inherit}
-    button{margin-top:12px}
-    #msg{margin-top:12px}
-  </style>
-</head>
-<body>
-  <h2>Registrieren</h2>
-  <form id="form">
-    <label> Name
-      <input name="name" placeholder="Dein Name (optional)" />
-    </label>
-    <label> E-Mail
-      <input type="email" name="email" placeholder="name@example.com" required />
-    </label>
-    <label> Passwort
-      <input type="password" name="password" placeholder="••••••••" required />
-    </label>
-    <button>Account anlegen</button>
-  </form>
+<!doctype html><html lang="de"><head>
+<meta charset="utf-8"/><title>Registrieren</title>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<style>
+body{font-family:system-ui;margin:40px}label{display:block;margin-top:10px}input,button{padding:10px;}button{margin-top:12px}
+</style></head><body>
+<h2>Registrieren</h2>
+<form id="f">
+<label>Name<input name="name"/></label>
+<label>E-Mail<input type="email" name="email" required/></label>
+<label>Passwort<input type="password" name="password" required/></label>
+<button>Account anlegen</button>
+</form>
+<p id="msg"></p><p><a href="./index.html">← Zurück</a></p>
 
-  <p id="msg"></p>
-  <p><a href="./index.html">← Zurück</a></p>
-
-  <script src="./js/api.js"></script>
-  <script>
-    const f = document.getElementById('form');
-    const msg = document.getElementById('msg');
-
-    f.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      msg.textContent = '';
-      const fd = new FormData(f);
-      try {
-        await apiRegister(fd.get('name') || null, fd.get('email'), fd.get('password'));
-        alert('✅ Registrierung erfolgreich! Jetzt einloggen.');
-        location.href = './login.html';
-      } catch (err) {
-        msg.textContent = 'Fehler: ' + (err.message || 'Registration fehlgeschlagen');
-      }
-    });
-  </script>
-</body>
-</html>
+<script src="./js/api.js"></script>
+<script>
+const f=document.getElementById('f'),msg=document.getElementById('msg');
+f.onsubmit=async e=>{
+ e.preventDefault();msg.textContent='';
+ const fd=new FormData(f);
+ try{
+  await apiRegister(fd.get('name'),fd.get('email'),fd.get('password'));
+  alert('✅ Registrierung erfolgreich');
+  location.href='./login.html';
+ }catch(e){msg.textContent=e.message;}
+};
+</script>
+</body></html>
