@@ -1,49 +1,50 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
-  <title>Registrieren • Finarix</title>
-  <link rel="stylesheet" href="./styles.css">
+  <meta charset="utf-8" />
+  <title>Registrieren – Finarix</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body{font-family:system-ui,Arial;margin:40px}
+    label{display:block;margin-top:10px}
+    input,button{padding:10px;font:inherit}
+    button{margin-top:12px}
+    #msg{margin-top:12px}
+  </style>
 </head>
-
 <body>
-  <h1>Registrieren</h1>
-
-  <form id="registerForm">
-    <input id="name" placeholder="Name eingeben" required>
-    <input id="email" type="email" placeholder="E-Mail" required>
-    <input id="password" type="password" placeholder="Passwort" required>
-    <button type="submit">Konto anlegen</button>
+  <h2>Registrieren</h2>
+  <form id="form">
+    <label> Name
+      <input name="name" placeholder="Dein Name (optional)" />
+    </label>
+    <label> E-Mail
+      <input type="email" name="email" placeholder="name@example.com" required />
+    </label>
+    <label> Passwort
+      <input type="password" name="password" placeholder="••••••••" required />
+    </label>
+    <button>Account anlegen</button>
   </form>
 
-  <p><a href="./login.html">Schon ein Konto? Login</a></p>
+  <p id="msg"></p>
+  <p><a href="./index.html">← Zurück</a></p>
 
-  <!-- ✅ API laden -->
   <script src="./js/api.js"></script>
-
-  <!-- ✅ Form Logik -->
   <script>
-    const form = document.getElementById('registerForm');
+    const f = document.getElementById('form');
+    const msg = document.getElementById('msg');
 
-    form.addEventListener('submit', async (e) => {
+    f.addEventListener('submit', async (e) => {
       e.preventDefault();
+      msg.textContent = '';
+      const fd = new FormData(f);
       try {
-        const body = {
-          name: document.getElementById('name').value,
-          email: document.getElementById('email').value,
-          password: document.getElementById('password').value,
-        };
-
-        console.log('[register] submit', body);
-
-        const res = await apiRequest('/auth/register', { body });
-
+        await apiRegister(fd.get('name') || null, fd.get('email'), fd.get('password'));
         alert('✅ Registrierung erfolgreich! Jetzt einloggen.');
-        window.location.href = './login.html';
-
+        location.href = './login.html';
       } catch (err) {
-        console.error('[register] error', err);
-        alert('❌ Fehler: ' + err.message);
+        msg.textContent = 'Fehler: ' + (err.message || 'Registration fehlgeschlagen');
       }
     });
   </script>
