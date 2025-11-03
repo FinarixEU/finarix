@@ -1,4 +1,3 @@
-// apps/Web/js/api.js
 const API_BASE = 'https://finarix.onrender.com/api';
 const TOKEN_KEY = 'token';
 
@@ -29,14 +28,15 @@ async function apiFetch(path, opts = {}) {
     credentials: 'omit',
   });
 
-  const raw = await res.text();
+  const text = await res.text();
   let data;
-  try { data = JSON.parse(raw); } catch { data = raw; }
+  try { data = JSON.parse(text); } catch { data = text; }
 
   if (!res.ok) {
-    const msg = (data && (data.message || data.error)) || res.statusText || 'Fehler';
+    const msg = (data && (data.message || data.error)) || res.statusText;
     throw new Error(msg);
   }
+
   return data;
 }
 
