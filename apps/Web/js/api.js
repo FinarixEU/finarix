@@ -1,9 +1,6 @@
-<!-- Datei: apps/Web/js/api.js -->
-<script>
-// Basis-URL deiner API
+// Datei: apps/Web/js/api.js
 const API_BASE = 'https://finarix.onrender.com/api';
 
-// Token lesen/schreiben
 function getToken() {
   return localStorage.getItem('token') || '';
 }
@@ -11,7 +8,6 @@ function setToken(t) {
   if (t) localStorage.setItem('token', t);
 }
 
-// Universelle API-Fetch-Funktion
 async function apiFetch(path, opts = {}) {
   const method = opts.method || (opts.body ? 'POST' : 'GET');
   const headers = {
@@ -38,15 +34,13 @@ async function apiFetch(path, opts = {}) {
     const msg = (data && (data.message || data.error)) || res.statusText;
     throw new Error(msg);
   }
-
   return data;
 }
 
-// Global verfügbar machen
+// global verfügbar machen
 window.apiFetch = apiFetch;
 window.apiToken = { get: getToken, set: setToken };
 
-// Logout-Helfer
 function logout() {
   localStorage.removeItem('token');
   location.href = './login.html';
@@ -54,4 +48,3 @@ function logout() {
 window.logout = logout;
 
 console.log('[api.js] LOADED', API_BASE);
-</script>
